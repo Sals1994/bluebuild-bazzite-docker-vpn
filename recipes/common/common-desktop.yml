@@ -19,7 +19,6 @@ modules:
         - dgop
         - dsearch
         - dms-greeter
-        - dankcalendar
 
   - type: dnf
     install:
