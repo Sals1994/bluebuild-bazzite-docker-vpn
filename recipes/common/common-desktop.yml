@@ -20,10 +20,18 @@ modules:
         - dsearch
         - dms-greeter
 
+  # ── Ghostty ────────────────────────────────────────────────────
+  - type: dnf
+    repos:
+      copr:
+        - scottames/ghostty
+    install:
+      packages:
+        - ghostty
+
   - type: dnf
     install:
       packages:
-        - alacritty
         - nautilus
         - file-roller
         - gvfs
