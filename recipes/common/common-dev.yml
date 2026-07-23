@@ -15,15 +15,6 @@ modules:
         - docker-compose-plugin
       allow-erasing: true
 
-  # VS Code — repo file provided via files/system/etc/yum.repos.d/vscode.repo
-  - type: dnf
-    repos:
-      keys:
-        - https://packages.microsoft.com/keys/microsoft.asc
-    install:
-      packages:
-        - code
-
   # Enable Docker via socket activation (starts on-demand)
   - type: systemd
     system:
