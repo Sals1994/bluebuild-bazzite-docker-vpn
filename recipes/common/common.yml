@@ -1,0 +1,37 @@
+# The entire delta between this image and stock Bazzite. Everything else --
+# desktop, kernel, gaming stack, NVIDIA drivers -- comes from the base on purpose.
+modules:
+  # ── Docker CE ─────────────────────────────────────────────────────────────
+  # Bazzite ships podman only; its intended answer to "I want Docker" is a
+  # distrobox container (/etc/distrobox/docker.ini), which cannot give us a
+  # docker.socket on the host.
+  #
+  # Deliberately NO allow-erasing: if docker-ce ever conflicts with something
+  # Bazzite ships, this build must fail loudly rather than let dnf silently
+  # remove part of the base and hand us a green build on a broken image.
+  - type: dnf
+    repos:
+      keys:
+        - https://download.docker.com/linux/fedora/gpg
+      files:
+        - https://download.docker.com/linux/fedora/docker-ce.repo
+    install:
+      packages:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-buildx-plugin
+        - docker-compose-plugin
+
+  # ── NordVPN ───────────────────────────────────────────────────────────────
+  - type: script
+    scripts:
+      - nordvpn.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - docker.socket    # socket-activated; dockerd starts on first use
+        - nordvpnd.service # the service, not nordvpnd.socket: socket activation
+                           # would only start the daemon on the first CLI call,
+                           # which defeats connecting at boot
