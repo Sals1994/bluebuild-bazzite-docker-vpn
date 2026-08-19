@@ -3,7 +3,9 @@ on:
   schedule:
     - cron:
         "00 06 * * *" # build at 06:00 UTC every day
-        # (20 minutes after last ublue images start building)
+        # Bazzite itself only publishes weekly (Mondays 04:40 UTC), so Monday's
+        # run picks up the new base 80 minutes later. The other six runs are for
+        # docker-ce and nordvpn, which release on their own cadence.
   push:
     paths-ignore: # don't rebuild if only documentation has changed
       - "**.md"

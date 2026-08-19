@@ -1,43 +1,64 @@
-# bluebuild-dms-niri &nbsp; [![bluebuild build badge](https://github.com/sals1994/bluebuild-dms-niri/actions/workflows/build.yml/badge.svg)](https://github.com/sals1994/bluebuild-dms-niri/actions/workflows/build.yml)
+# bazzite-docker-vpn &nbsp; [![bluebuild build badge](https://github.com/sals1994/bluebuild-dms-niri/actions/workflows/build.yml/badge.svg)](https://github.com/sals1994/bluebuild-dms-niri/actions/workflows/build.yml)
 
-See the [BlueBuild docs](https://blue-build.org/how-to/setup/) for quick setup instructions for setting up your own repository based on this template.
+[Bazzite](https://bazzite.gg) (KDE) with **Docker CE** and **NordVPN** baked in, and
+nothing else.
 
-After setup, it is recommended you update this README to describe your custom image.
+Everything else — the desktop, the OGC kernel, Steam/Proton/gamescope, HDR, controller
+firmware, NVIDIA drivers — comes from Bazzite and is deliberately not configured here.
+The image exists only to bake in those two packages: layered onto a running host they
+would be re-resolved against every Bazzite update, so a broken third-party repo would
+block system updates. Baked in, that failure shows up as a red CI badge instead.
+
+| Variant | Image | Base |
+| --- | --- | --- |
+| Standard | `ghcr.io/sals1994/bazzite-docker-vpn` | `ghcr.io/ublue-os/bazzite` |
+| NVIDIA | `ghcr.io/sals1994/bazzite-docker-vpn-nvidia` | `ghcr.io/ublue-os/bazzite-nvidia-open` |
+
+The NVIDIA variant uses the **open** kernel modules, which require a Turing (RTX 2000)
+or newer GPU. Both track Bazzite's `stable` tag.
 
 ## Installation
 
-> [!WARNING]  
-> [This is an experimental feature](https://www.fedoraproject.org/wiki/Changes/OstreeNativeContainerStable), try at your own discretion.
+Install [Bazzite](https://bazzite.gg) normally, then rebase once:
 
-To rebase an existing atomic Fedora installation to the latest build:
+```bash
+# 1. rebase to the unsigned image first, to get the signing keys and policies installed
+sudo bootc switch --transport registry ghcr.io/sals1994/bazzite-docker-vpn:latest
+systemctl reboot
 
-- First rebase to the unsigned image, to get the proper signing keys and policies installed:
-  ```
-  rpm-ostree rebase ostree-unverified-registry:ghcr.io/sals1994/bluebuild-dms-niri:latest
-  ```
-- Reboot to complete the rebase:
-  ```
-  systemctl reboot
-  ```
-- Then rebase to the signed image, like so:
-  ```
-  rpm-ostree rebase ostree-image-signed:docker://ghcr.io/sals1994/bluebuild-dms-niri:latest
-  ```
-- Reboot again to complete the installation
-  ```
-  systemctl reboot
-  ```
+# 2. then rebase to the signed image
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/sals1994/bazzite-docker-vpn:latest
+systemctl reboot
+```
 
-The `latest` tag will automatically point to the latest build. That build will still always use the Fedora version specified in `recipe.yml`, so you won't get accidentally updated to the next major version.
+### Post-install (once per machine)
 
-## ISO
+The image creates the `docker` and `nordvpn` groups and enables `docker.socket` and
+`nordvpnd.service`, but your user still has to be added to the groups:
 
-If build on Fedora Atomic, you can generate an offline ISO with the instructions available [here](https://blue-build.org/how-to/generate-iso/#_top). These ISOs cannot unfortunately be distributed on GitHub for free due to large sizes, so for public projects something else has to be used for hosting.
+```bash
+sudo usermod -aG docker,nordvpn "$USER"
+```
+
+Log out and back in for it to take effect.
+
+> [!NOTE]
+> NordVPN's **killswitch is expected not to work**. It depends on `iptables-legacy`,
+> which Fedora no longer uses by default, and NordVPN dropped Fedora support at 42.
+> Carrying a deprecated firewall backend for one feature was judged not worth it.
+
+### Migrating from `bluebuild-dms-niri`
+
+This repo used to build a niri + Dank Material Shell image. That image is gone and is no
+longer built; its final state is tagged [`niri-dms-final`](../../tree/niri-dms-final).
+Machines still tracking it will **silently stop receiving updates** — there is no
+redirect. Run the `bootc switch` above once per machine to move over.
 
 ## Verification
 
-These images are signed with [Sigstore](https://www.sigstore.dev/)'s [cosign](https://github.com/sigstore/cosign). You can verify the signature by downloading the `cosign.pub` file from this repo and running the following command:
+These images are signed with [Sigstore](https://www.sigstore.dev/)'s
+[cosign](https://github.com/sigstore/cosign). Download `cosign.pub` from this repo and:
 
 ```bash
-cosign verify --key cosign.pub ghcr.io/sals1994/bluebuild-dms-niri
+cosign verify --key cosign.pub ghcr.io/sals1994/bazzite-docker-vpn
 ```
